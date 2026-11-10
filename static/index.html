@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEROVA — International Airline & Flight Reservation</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230284c7'><path d='M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'/></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="brand" onclick="app.resetFlow()">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+        </svg>
+      </div>
+      <span>AEROVA AIR</span>
+    </div>
+
+    <nav class="nav-links">
+      <span class="nav-item active" onclick="app.resetFlow()">Book Flights</span>
+      <button class="pnr-search-btn" onclick="app.openLookupModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Manage Booking / PNR
+      </button>
+    </nav>
+  </header>
+
+  <!-- Flow Progress Stepper -->
+  <div class="stepper-container">
+    <div class="stepper" id="stepper">
+      <div class="step-item active" data-step="1">
+        <div class="step-bubble">1</div>
+        <div class="step-label">Search & Select</div>
+      </div>
+      <div class="step-item" data-step="2">
+        <div class="step-bubble">2</div>
+        <div class="step-label">Choose Seats</div>
+      </div>
+      <div class="step-item" data-step="3">
+        <div class="step-bubble">3</div>
+        <div class="step-label">Passenger Info</div>
+      </div>
+      <div class="step-item" data-step="4">
+        <div class="step-bubble">4</div>
+        <div class="step-label">Payment</div>
+      </div>
+      <div class="step-item" data-step="5">
+        <div class="step-bubble">5</div>
+        <div class="step-label">Boarding Pass</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    
+    <!-- STEP 1: Search and Flight Results -->
+    <section id="step-1" class="step-section">
+      <div class="hero">
+        <h1>Fly Higher, Explore Further</h1>
+        <p>Book premium non-stop and international flights worldwide</p>
+      </div>
+
+      <div class="search-card">
+        <div class="trip-type-tabs">
+          <button class="tab-btn active" id="tab-oneway" onclick="app.setTripType('oneway')">One Way</button>
+          <button class="tab-btn" id="tab-roundtrip" onclick="app.setTripType('roundtrip')">Round Trip</button>
+        </div>
+
+        <form id="search-form" onsubmit="app.handleSearch(event)">
+          <div class="search-grid">
+            <div class="form-group">
+              <label>Origin Airport</label>
+              <select id="origin-select" class="form-select" required>
+                <option value="">Loading airports...</option>
+              </select>
+            </div>
+
+            <div style="display: flex; justify-content: center; align-items: flex-end; padding-bottom: 4px;">
+              <button type="button" class="swap-btn" title="Swap Origin and Destination" onclick="app.swapAirports()">⇄</button>
+            </div>
+
+            <div class="form-group">
+              <label>Destination Airport</label>
+              <select id="destination-select" class="form-select" required>
+                <option value="">Loading airports...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Departure Date</label>
+              <input type="date" id="departure-date" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label>Cabin Class</label>
+              <select id="cabin-class-select" class="form-select">
+                <option value="economy">Economy</option>
+                <option value="business">Business Class</option>
+                <option value="first">First Class</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Passengers</label>
+              <select id="passenger-count-select" class="form-select">
+                <option value="1">1 Passenger</option>
+                <option value="2">2 Passengers</option>
+                <option value="3">3 Passengers</option>
+                <option value="4">4 Passengers</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-primary" style="height: 48px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              Search Flights
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Results List -->
+      <div id="flight-results-container">
+        <div class="results-header">
+          <div class="results-count" id="results-count-text">Available Flights</div>
+        </div>
+        <div id="flight-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: Interactive Seat Map -->
+    <section id="step-2" class="step-section hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <button class="btn-secondary" onclick="app.goToStep(1)">← Back to Flights</button>
+        <h2 style="font-size: 1.5rem;">Select Your Seats</h2>
+        <div style="width: 120px;"></div>
+      </div>
+
+      <div class="seat-selection-view">
+        <!-- Aircraft Fuselage -->
+        <div class="fuselage-card">
+          <div class="airplane-nose">Cockpit</div>
+
+          <div style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;" id="seat-passenger-prompt">
+            Please pick <strong id="seats-needed-count" style="color: #38bdf8;">1 seat</strong> for Passenger 1
+          </div>
+
+          <div id="fuselage-seats-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Legend -->
+          <div class="seat-legend">
+            <div class="legend-item">
+              <div class="legend-box" style="background: #1e293b; border: 1px solid #334155;"></div>
+              <span>Economy</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box" style="background: #1e3a8a; border: 1px solid #1d4ed8;"></div>
+              <span>Business</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box" style="background: #312e81; border: 1px solid #4338ca;"></div>
+              <span>First Class</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box" style="background: #10b981;"></div>
+              <span>Selected</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box" style="background: #18181b; border: 1px solid #27272a;"></div>
+              <span>Occupied</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Summary -->
+        <div class="cart-sidebar">
+          <h3>Booking Summary</h3>
+          <div class="flight-mini-summary" id="selected-flight-mini-card">
+            <!-- Mini Flight details -->
+          </div>
+
+          <div class="price-breakdown">
+            <div class="breakdown-row">
+              <span id="fare-label-summary">Base Fare (1 Passenger)</span>
+              <span id="base-fare-price">$0.00</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Seat Selection Fee</span>
+              <span id="seat-fee-price">$0.00</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Taxes & Airport Fees</span>
+              <span>$45.00</span>
+            </div>
+            <div class="breakdown-row total">
+              <span>Total Price</span>
+              <span id="total-price-summary" style="color: #38bdf8;">$0.00</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="confirm-seats-btn" style="width: 100%;" onclick="app.proceedToPassengerInfo()">
+            Continue to Passenger Info →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Passenger Information Form -->
+    <section id="step-3" class="step-section hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <button class="btn-secondary" onclick="app.goToStep(2)">← Back to Seat Map</button>
+        <h2 style="font-size: 1.5rem;">Passenger Details & Preferences</h2>
+        <div style="width: 120px;"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <div>
+          <form id="passenger-info-form" onsubmit="app.handlePassengerSubmit(event)">
+            <div id="passenger-cards-container">
+              <!-- Dynamically populated with passenger input cards -->
+            </div>
+
+            <!-- Contact Information -->
+            <div class="passenger-card">
+              <div class="passenger-card-header">
+                <h4>Contact Details (For Ticket & Flight Updates)</h4>
+              </div>
+              <div class="search-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                  <label>Full Contact Name</label>
+                  <input type="text" id="contact-name" class="form-input" placeholder="e.g. John Doe" required>
+                </div>
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="contact-email" class="form-input" placeholder="john.doe@example.com" required>
+                </div>
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="tel" id="contact-phone" class="form-input" placeholder="+1 (555) 019-2834" required>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem;">
+              Continue to Payment →
+            </button>
+          </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="cart-sidebar">
+          <h3>Order Review</h3>
+          <div class="flight-mini-summary" id="review-flight-mini-card"></div>
+          <div class="price-breakdown">
+            <div class="breakdown-row">
+              <span>Flight Total</span>
+              <span id="review-base-fare">$0.00</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Seat Surcharges</span>
+              <span id="review-seat-fee">$0.00</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Extra Baggage</span>
+              <span id="review-baggage-fee">$0.00</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Taxes & Regulatory</span>
+              <span>$45.00</span>
+            </div>
+            <div class="breakdown-row total">
+              <span>Total Payable</span>
+              <span id="review-grand-total" style="color: #38bdf8;">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: Payment Simulation -->
+    <section id="step-4" class="step-section hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <button class="btn-secondary" onclick="app.goToStep(3)">← Back to Passenger Info</button>
+        <h2 style="font-size: 1.5rem;">Secure Checkout</h2>
+        <div style="width: 120px;"></div>
+      </div>
+
+      <div style="max-width: 650px; margin: 0 auto;">
+        <div class="search-card">
+          <!-- Total and Security -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.85rem;">Total Amount to Pay</div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #38bdf8;" id="payment-display-total">$0.00</div>
+              <div id="discount-applied-tag" class="promo-badge hidden">Promo code applied: -<span id="discount-amount-display">$0.00</span></div>
+            </div>
+            <div style="text-align: right;">
+              <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600;">
+                🔒 256-bit Encrypted
+              </span>
+            </div>
+          </div>
+
+          <!-- Promo Code Engine -->
+          <div class="promo-box">
+            <label style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">
+              Have a Promo Code or Voucher? (Try <code>FLY20</code> for 20% off or <code>AERO50</code> for $50 off)
+            </label>
+            <div class="promo-input-group">
+              <input type="text" id="promo-code-input" class="form-input" placeholder="e.g. FLY20" style="text-transform: uppercase;">
+              <button type="button" class="btn-secondary" onclick="app.applyPromoCode()">Apply</button>
+            </div>
+          </div>
+
+          <!-- Payment Method Tabs -->
+          <div class="payment-tabs">
+            <button type="button" class="payment-tab-btn active" id="tab-pay-card" onclick="app.selectPaymentMethod('card')">
+              <span style="font-size: 1.3rem;">💳</span>
+              <span>Credit / Debit Card</span>
+            </button>
+            <button type="button" class="payment-tab-btn" id="tab-pay-upi" onclick="app.selectPaymentMethod('upi')">
+              <span style="font-size: 1.3rem;">📱</span>
+              <span>UPI / Instant QR</span>
+            </button>
+            <button type="button" class="payment-tab-btn" id="tab-pay-wallet" onclick="app.selectPaymentMethod('wallet')">
+              <span style="font-size: 1.3rem;">🌐</span>
+              <span>PayPal / Apple Pay</span>
+            </button>
+          </div>
+
+          <!-- Card Payment Form -->
+          <div id="pay-panel-card">
+            <button type="button" class="demo-fill-btn" onclick="app.autoFillDemoCard()">
+              ⚡ Click here to Auto-Fill Test Card Details
+            </button>
+
+            <form id="payment-form" onsubmit="app.trigger3DSecure(event)">
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Name on Card</label>
+                <input type="text" id="card-name" class="form-input" placeholder="e.g. John Doe" required>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Card Number</label>
+                <input type="text" id="card-number" class="form-input" placeholder="4532 •••• •••• 8892" maxlength="19" required>
+              </div>
+
+              <div class="payment-grid" style="margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <label>Expiration (MM/YY)</label>
+                  <input type="text" id="card-exp" class="form-input" placeholder="12/28" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                  <label>Security Code (CVV)</label>
+                  <input type="password" id="card-cvv" class="form-input" placeholder="882" maxlength="4" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" id="pay-submit-btn" style="width: 100%; padding: 1.1rem; font-size: 1.1rem;">
+                Proceed to 3D Secure Authorization →
+              </button>
+            </form>
+          </div>
+
+          <!-- UPI / QR Payment Form -->
+          <div id="pay-panel-upi" class="hidden">
+            <div class="qr-container">
+              <div class="qr-code-box">SCAN & PAY</div>
+              <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">Scan using any UPI App (GPay, PhonePe, Paytm)</p>
+              <p style="font-size: 0.8rem; color: #64748b;">Or enter UPI ID / VPA below</p>
+            </div>
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label>Virtual Payment Address (VPA)</label>
+              <input type="text" id="upi-vpa-input" class="form-input" placeholder="username@okhdfcbank" value="traveler@okaxis">
+            </div>
+            <button type="button" class="btn-primary" style="width: 100%; padding: 1.1rem;" onclick="app.trigger3DSecure(event)">
+              Approve Payment & Issue Ticket →
+            </button>
+          </div>
+
+          <!-- Wallet Form -->
+          <div id="pay-panel-wallet" class="hidden">
+            <div style="text-align: center; padding: 2rem 1rem;">
+              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍎 / 🅿️</div>
+              <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Fast 1-click checkout with stored biometric wallet</p>
+              <button type="button" class="btn-primary" style="width: 100%; background: #000; border: 1px solid #444; padding: 1.1rem;" onclick="app.trigger3DSecure(event)">
+                Pay with Apple Pay / PayPal
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 5: Boarding Pass & Confirmation -->
+    <section id="step-5" class="step-section hidden">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(16, 185, 129, 0.2); border-radius: 50%; color: #10b981; margin-bottom: 1rem;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2 style="font-size: 2rem; font-weight: 800;">Booking & Payment Confirmed!</h2>
+        <p style="color: var(--text-muted); margin-top: 0.35rem;">
+          Your digital ticket and boarding pass have been issued. Your booking reference is <strong id="confirmed-pnr-display" style="color: #38bdf8; font-size: 1.25rem;"></strong>
+        </p>
+      </div>
+
+      <div class="boarding-pass-wrapper" id="boarding-passes-container">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="window.print()">
+          🖨️ Print Boarding Pass
+        </button>
+        <button class="btn-secondary" onclick="app.openInvoiceModal()">
+          📄 View Tax Invoice & Receipt
+        </button>
+        <button class="btn-secondary" onclick="app.resetFlow()">
+          Book Another Flight
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 3D Secure / OTP Authentication Modal -->
+  <div class="modal-overlay hidden" id="otp-modal">
+    <div class="bank-modal">
+      <div class="bank-header">
+        <div style="font-weight: 800; color: #0284c7; font-size: 1.15rem;">BANK VERIFY 3D-SECURE</div>
+        <div style="font-size: 0.8rem; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">SMS OTP</div>
+      </div>
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">
+        A 6-digit authentication code has been sent to your registered mobile phone ending in <strong>••92</strong> to authorize this payment.
+      </p>
+
+      <button type="button" class="demo-fill-btn" style="color: #0284c7; border-color: #0284c7; background: #e0f2fe; margin-bottom: 0.5rem;" onclick="app.autoFillOTP()">
+        ⚡ Auto-fill Demo Code (849201)
+      </button>
+
+      <input type="text" id="bank-otp-code" class="bank-otp-input" maxlength="6" placeholder="••••••" value="">
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="button" class="btn-primary" id="confirm-otp-btn" style="flex: 2;" onclick="app.submitOTP()">
+          Authorize & Complete Payment
+        </button>
+        <button type="button" class="btn-secondary" style="flex: 1;" onclick="app.closeOTPModal()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax Invoice & Payment Receipt Modal -->
+  <div class="modal-overlay hidden" id="invoice-modal">
+    <div class="invoice-card">
+      <div class="invoice-header">
+        <div>
+          <h2 style="color: #0284c7; font-weight: 900; font-size: 1.6rem;">TAX INVOICE / RECEIPT</h2>
+          <div style="color: #64748b; font-size: 0.85rem;" id="invoice-txn-id">Transaction: TXN-00000000</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 800; font-size: 1.1rem;">AEROVA INTERNATIONAL</div>
+          <div style="color: #64748b; font-size: 0.8rem;">VAT/GST ID: AER-8910284-US</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.9rem;">
+        <div>
+          <div style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Billed To:</div>
+          <div style="font-weight: 700;" id="invoice-client-name">Passenger Name</div>
+          <div id="invoice-client-email" style="color: #64748b;">email@example.com</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Booking Reference:</div>
+          <div style="font-weight: 800; color: #0284c7; font-size: 1.2rem;" id="invoice-pnr-display">SKY000</div>
+          <div id="invoice-date" style="color: #64748b; font-size: 0.8rem;">Date: 2026-11-05</div>
+        </div>
+      </div>
+
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="invoice-items-body">
+          <!-- Populated by JS -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="text-align: right; font-weight: 600;">Subtotal:</td>
+            <td style="text-align: right; font-weight: 600;" id="invoice-subtotal">$0.00</td>
+          </tr>
+          <tr id="invoice-discount-row" class="hidden">
+            <td colspan="3" style="text-align: right; font-weight: 600; color: #10b981;">Discount Applied:</td>
+            <td style="text-align: right; font-weight: 600; color: #10b981;" id="invoice-discount">-$0.00</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="text-align: right; font-weight: 600;">Airport Taxes & Security:</td>
+            <td style="text-align: right; font-weight: 600;">$45.00</td>
+          </tr>
+          <tr style="border-top: 2px solid #0f172a;">
+            <td colspan="3" style="text-align: right; font-weight: 900; font-size: 1.15rem;">Total Paid (PAID IN FULL):</td>
+            <td style="text-align: right; font-weight: 900; font-size: 1.15rem; color: #0284c7;" id="invoice-grand-total">$0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+        <span style="font-size: 0.85rem; color: #10b981; font-weight: 700;">✓ Verified Electronic Receipt</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn-primary" onclick="window.print()">Print Receipt</button>
+          <button type="button" class="btn-secondary" onclick="app.closeInvoiceModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PNR Lookup Modal -->
+  <div class="modal-overlay hidden" id="lookup-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 1.3rem;">Find Your Booking</h3>
+        <button class="close-btn" onclick="app.closeLookupModal()">&times;</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+        Enter your 6-character Booking Reference (PNR) to view reservation details or reprint boarding passes.
+      </p>
+      <form onsubmit="app.handleLookupSubmit(event)">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label>PNR Reference Code</label>
+          <input type="text" id="lookup-pnr-input" class="form-input" placeholder="e.g. SKY402" maxlength="6" style="text-transform: uppercase; font-size: 1.25rem; font-weight: 700; letter-spacing: 2px;" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Search Reservation</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
